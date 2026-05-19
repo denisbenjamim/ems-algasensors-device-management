@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,6 +23,8 @@ import com.algaworks.algasensors.device.management.domain.model.SensorId;
 import com.algaworks.algasensors.device.management.domain.repository.SensorRepository;
 
 import io.hypersistence.tsid.TSID;
+import jakarta.validation.Valid;
+
 import org.springframework.web.bind.annotation.PutMapping;
 
 
@@ -35,8 +38,18 @@ public class SensorController {
         this.repository = repository;
     }
 
+    @DeleteMapping("{sensorId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable TSID sensorId) {
+        if(!repository.existsById(new SensorId(sensorId))){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+      
+        repository.deleteById(new SensorId(sensorId));
+    }
+
     @PutMapping("{sensorId}")
-    public SensorOutput update(@PathVariable TSID sensorId, @RequestBody SensorInput input) {
+    public SensorOutput update(@PathVariable TSID sensorId,@Valid @RequestBody SensorInput input) {
         if(!repository.existsById(new SensorId(sensorId))){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }

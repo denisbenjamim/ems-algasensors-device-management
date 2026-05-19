@@ -22,6 +22,8 @@ import com.algaworks.algasensors.device.management.domain.model.SensorId;
 import com.algaworks.algasensors.device.management.domain.repository.SensorRepository;
 
 import io.hypersistence.tsid.TSID;
+import org.springframework.web.bind.annotation.PutMapping;
+
 
 @RestController
 @RequestMapping("/api/sensors")
@@ -33,6 +35,17 @@ public class SensorController {
         this.repository = repository;
     }
 
+    @PutMapping("{sensorId}")
+    public SensorOutput update(@PathVariable TSID sensorId, @RequestBody SensorInput input) {
+        if(!repository.existsById(new SensorId(sensorId))){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+
+        Sensor sensor = criarSensor(sensorId, input);
+        sensor = repository.saveAndFlush(sensor);
+        
+        return convertSensorToSensorOutput(sensor);
+    }
     @GetMapping
     public Page<SensorOutput> search(@PageableDefault Pageable pageable){
         final Page<Sensor> sensors = repository.findAll(pageable);
@@ -49,8 +62,20 @@ public class SensorController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public SensorOutput create(@RequestBody SensorInput input){
-        Sensor sensor =  SensorBuilder.sensor()
-            .id(new SensorId(IdGenerator.generateTSID()))
+        Sensor sensor = criarSensor(input);
+
+        sensor = repository.saveAndFlush(sensor);
+
+        return convertSensorToSensorOutput(sensor);
+    }
+
+    private Sensor criarSensor(SensorInput input) {
+        return  criarSensor(IdGenerator.generateTSID(), input);
+    }
+
+    private Sensor criarSensor(TSID sensorId,SensorInput input) {
+        return SensorBuilder.sensor()
+            .id(new SensorId(sensorId))
             .name(input.name())
             .ip(input.ip())
             .location(input.location())
@@ -58,10 +83,6 @@ public class SensorController {
             .model(input.model())
             .enabled(false)
         .build();
-
-        sensor = repository.saveAndFlush(sensor);
-
-        return convertSensorToSensorOutput(sensor);
     }
 
     private SensorOutput convertSensorToSensorOutput(Sensor sensor) {

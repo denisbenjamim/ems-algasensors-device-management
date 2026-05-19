@@ -1,5 +1,8 @@
 package com.algaworks.algasensors.device.management.api.controller;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,6 +31,12 @@ public class SensorController {
 
     public SensorController(SensorRepository repository) {
         this.repository = repository;
+    }
+
+    @GetMapping
+    public Page<SensorOutput> search(@PageableDefault Pageable pageable){
+        final Page<Sensor> sensors = repository.findAll(pageable);
+        return sensors.map(this::convertSensorToSensorOutput);
     }
 
     @GetMapping("{sensorId}")
